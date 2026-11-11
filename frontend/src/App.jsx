@@ -18,6 +18,10 @@ function decodeJwtRoles(token) {
     return []
   }
 }
+const handleClick = (event) => {
+  const idDoBotao = event.currentTarget.id; // ou event.currentTarget.getAttribute('data-id')
+  console.log('ID capturado:', idDoBotao);
+};
 
 export default function App() {
   const {
@@ -90,6 +94,29 @@ export default function App() {
       setCarregandoLista(false)
     }
   }
+  async function deletarArtigo(id) {
+    try {
+      const authToken = token || (await getAccessTokenSilently())
+      const response = await fetch(`${apiUrl}/artigos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`
+        }
+      })
+
+      if (response.status === 403) {
+        throw new Error(
+            'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem deletar artigos.'
+        )
+      }
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(`Falha ao deletar artigo (${response.status}): ${text}`)
+      }
+  }catch (e) {
+      setErro(e.message || 'Erro ao remover.')
+    }
 
   async function cadastrarAvaliacao(e) {
     e.preventDefault()
@@ -202,17 +229,6 @@ export default function App() {
             </label>
 
             <label>
-              E-mail do Avaliado
-              <input
-                type="email"
-                value={emailAvaliado}
-                onChange={(e) => setEmailAvaliado(e.target.value)}
-                placeholder="colaborador@empresa.com"
-                required
-              />
-            </label>
-
-            <label>
               Nota (0 a 10)
               <input
                 type="number"
@@ -262,11 +278,14 @@ export default function App() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th></th>
-                    <th>Avaliado</th>
+                    <th>
+                      <button key={item.id} id={item.id} onClick={() => deletarArtigo(item.id)}>>
+                        remover
+                      </button>
+                    </th>
                     <th>Nota</th>
                     <th>Comentários</th>
-                    <th>Data</th>
+
                   </tr>
                 </thead>
                 <tbody>
