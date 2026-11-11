@@ -1,0 +1,67 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: "lgharo"
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: lgharo/simulado_proj_soft_pf-ci:${{ github.sha }}
+
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_TEST }}
+          username: "ubuntu"
+          key: ${{ secrets.KEY_TEST }}
+          port: 22
+          script: |
+            docker stop simulado_proj_soft_pf || true
+            docker rm --force simulado_proj_soft_pf || true
+            docker network create rede || true
+            docker start postgres-prova || docker run -d \
+              --name postgres-prova \
+              --network rede \
+              -e POSTGRES_DB=provadb \
+              -e POSTGRES_USER=usuario \
+              -e POSTGRES_PASSWORD=senha \
+              -p 5432:5432 \
+              postgres:16-alpine
+            docker run -d \
+              -p 8080:8080 \
+              --name simulado_proj_soft_pf \
+              --network rede \
+              -e SPRING_DATASOURCE_URL="jdbc:postgresql://postgres-prova:5432/provadb" \
+              -e SPRING_DATASOURCE_USERNAME="usuario" \
+              -e SPRING_DATASOURCE_PASSWORD="senha" \
+              -e SPRING_JPA_HIBERNATE_DDL_AUTO="update" \
+              lgharo/simulado_proj_soft_pf-ci:${{ github.sha }}

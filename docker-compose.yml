@@ -1,0 +1,33 @@
+services:
+  postgres-prova:
+    image: postgres:16-alpine
+    container_name: postgres-prova
+    restart: always
+    environment:
+      POSTGRES_DB: provadb
+      POSTGRES_USER: usuario
+      POSTGRES_PASSWORD: senha
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: simulado_proj_soft_pf
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-prova:5432/provadb
+      SPRING_DATASOURCE_USERNAME: usuario
+      SPRING_DATASOURCE_PASSWORD: senha
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      AUTH0_ISSUER_URI: https://dev-mq0u4hp5ecfo3ppq.us.auth0.com/
+    depends_on:
+      - postgres-prova
+
+volumes:
+  pgdata:

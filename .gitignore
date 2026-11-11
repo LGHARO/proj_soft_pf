@@ -1,0 +1,19 @@
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+backend/data/
+*.class
+*.jar
+*.war
+
+# Node / Vite
+node_modules/
+dist/
+.vercel/
+.env.local
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
