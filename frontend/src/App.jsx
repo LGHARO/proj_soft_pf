@@ -18,10 +18,6 @@ function decodeJwtRoles(token) {
     return []
   }
 }
-const handleClick = (event) => {
-  const idDoBotao = event.currentTarget.id; // ou event.currentTarget.getAttribute('data-id')
-  console.log('ID capturado:', idDoBotao);
-};
 
 export default function App() {
   const {
@@ -52,6 +48,14 @@ export default function App() {
       setEmail(user.email)
     }
   }, [user])
+
+
+
+  const handleClick = (event) => {
+    const idDoBotao = event.currentTarget.id; // ou event.currentTarget.getAttribute('data-id')
+    deletarArtigo(idDoBotao);
+    console.log('ID capturado:', idDoBotao);
+  };
 
   useEffect(() => {
     async function initAuthAndFetch() {
@@ -116,6 +120,8 @@ export default function App() {
       }
   }catch (e) {
       setErro(e.message || 'Erro ao remover.')
+    }
+
     }
 
   async function cadastrarAvaliacao(e) {
@@ -279,13 +285,12 @@ export default function App() {
                   <tr>
                     <th>ID</th>
                     <th>
-                      <button key={item.id} id={item.id} onClick={() => deletarArtigo(item.id)}>>
+                      <button key={item.id} id={item.id} onClick={handleClick}>
                         remover
                       </button>
                     </th>
                     <th>Nota</th>
                     <th>Comentários</th>
-
                   </tr>
                 </thead>
                 <tbody>
