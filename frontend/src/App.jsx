@@ -49,14 +49,6 @@ export default function App() {
     }
   }, [user])
 
-
-
-  const handleClick = (event) => {
-    const idDoBotao = event.currentTarget.id; // ou event.currentTarget.getAttribute('data-id')
-    deletarArtigo(idDoBotao);
-    console.log('ID capturado:', idDoBotao);
-  };
-
   useEffect(() => {
     async function initAuthAndFetch() {
       if (!isAuthenticated) return
@@ -98,31 +90,6 @@ export default function App() {
       setCarregandoLista(false)
     }
   }
-  async function deletarArtigo(id) {
-    try {
-      const authToken = token || (await getAccessTokenSilently())
-      const response = await fetch(`${apiUrl}/artigos/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        }
-      })
-
-      if (response.status === 403) {
-        throw new Error(
-            'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem deletar artigos.'
-        )
-      }
-      if (!response.ok) {
-        const text = await response.text()
-        throw new Error(`Falha ao deletar artigo (${response.status}): ${text}`)
-      }
-  }catch (e) {
-      setErro(e.message || 'Erro ao remover.')
-    }
-
-    }
 
   async function cadastrarAvaliacao(e) {
     e.preventDefault()
@@ -148,7 +115,7 @@ export default function App() {
 
       if (response.status === 403) {
         throw new Error(
-          'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem cadastrar artigos.'
+            'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem cadastrar artigos.'
         )
       }
       if (!response.ok) {
@@ -170,152 +137,148 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="container center-card">
-        <h2>Carregando autenticação Auth0...</h2>
-      </div>
+        <div className="container center-card">
+          <h2>Carregando autenticação Auth0...</h2>
+        </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="container center-card">
-        <h1>Sistema de Artigos</h1>
-        <p className="subtitle">
-          Plataforma corporativa para avaliação de colaboradores autenticada via Auth0.
-        </p>
-        <button className="btn-primary" onClick={() => loginWithRedirect()}>
-          Entrar com Auth0
-        </button>
-      </div>
+        <div className="container center-card">
+          <h1>Sistema de Artigos</h1>
+          <p className="subtitle">
+            Plataforma corporativa para avaliação de colaboradores autenticada via Auth0.
+          </p>
+          <button className="btn-primary" onClick={() => loginWithRedirect()}>
+            Entrar com Auth0
+          </button>
+        </div>
     )
   }
 
   return (
-    <div className="container">
-      <header className="header">
-        <div>
-          <h1>Sistema de Artigos</h1>
-          <p className="user-info">
-            Logado como: <strong>{user?.email || user?.name}</strong>
-            {roles.length > 0 ? (
-              roles.map((r) => (
-                <span key={r} className={`badge ${r.toUpperCase() === 'ADMIN' ? 'badge-admin' : 'badge-user'}`}>
+      <div className="container">
+        <header className="header">
+          <div>
+            <h1>Sistema de Artigos</h1>
+            <p className="user-info">
+              Logado como: <strong>{user?.email || user?.name}</strong>
+              {roles.length > 0 ? (
+                  roles.map((r) => (
+                      <span key={r} className={`badge ${r.toUpperCase() === 'ADMIN' ? 'badge-admin' : 'badge-user'}`}>
                   {r}
                 </span>
-              ))
-            ) : (
-              <span className="badge badge-user">USER</span>
-            )}
-          </p>
-        </div>
-        <button
-          className="btn-secondary"
-          onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-        >
-          Sair
-        </button>
-      </header>
-
-      {erro && <div className="alert alert-error">{erro}</div>}
-      {sucesso && <div className="alert alert-success">{sucesso}</div>}
-
-      <div className="grid">
-        <section className="card">
-          <h2>Nova artigo (ADMIN)</h2>
-          <form onSubmit={cadastrarAvaliacao} className="form">
-            <label>
-              E-mail do
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="avaliador@empresa.com"
-                required
-              />
-            </label>
-
-            <label>
-              Nota (0 a 10)
-              <input
-                type="number"
-                min="0"
-                max="10"
-                value={prioridade}
-                onChange={(e) => setNota(e.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              Comentários da artigo
-              <textarea
-                rows="4"
-                value={descricao}
-                onChange={(e) => setComentarios(e.target.value)}
-                placeholder="Descreva os pontos fortes e oportunidades de melhoria..."
-                required
-              />
-            </label>
-
-            <button type="submit" className="btn-primary" disabled={enviando}>
-              {enviando ? 'Cadastrando...' : 'Cadastrar artigo'}
-            </button>
-          </form>
-        </section>
-
-        <section className="card">
-          <div className="list-header">
-            <h2>Artigos Registradas ({artigos.length})</h2>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => buscarAvaliacoes()}
-              disabled={carregandoLista}
-            >
-              {carregandoLista ? 'Atualizando...' : 'Atualizar'}
-            </button>
+                  ))
+              ) : (
+                  <span className="badge badge-user">USER</span>
+              )}
+            </p>
           </div>
+          <button
+              className="btn-secondary"
+              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+          >
+            Sair
+          </button>
+        </header>
 
-          {artigos.length === 0 ? (
-            <p className="empty-state">Nenhuma avaliação cadastrada até o momento.</p>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>
-                      <button key={item.id} id={item.id} onClick={handleClick}>
-                        remover
-                      </button>
-                    </th>
-                    <th>Nota</th>
-                    <th>Comentários</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {artigos.map((av) => (
-                    <tr key={av.id}>
-                      <td>#{av.id}</td>
-                      <td>{av.email}</td>
-                      <td>{av.emailAvaliado}</td>
-                      <td>
-                        <span className="score-pill">{av.prioridade} / 10</span>
-                      </td>
-                      <td>{av.descricao}</td>
-                      <td>
-                        {av.dataAvaliacao
-                          ? new Date(av.dataAvaliacao).toLocaleString('pt-BR')
-                          : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {erro && <div className="alert alert-error">{erro}</div>}
+        {sucesso && <div className="alert alert-success">{sucesso}</div>}
+
+        <div className="grid">
+          <section className="card">
+            <h2>Nova artigo (ADMIN)</h2>
+            <form onSubmit={cadastrarAvaliacao} className="form">
+              <label>
+                E-mail do
+                <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="avaliador@empresa.com"
+                    required
+                />
+              </label>
+
+              <label>
+                Nota (0 a 10)
+                <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={prioridade}
+                    onChange={(e) => setNota(e.target.value)}
+                    required
+                />
+              </label>
+
+              <label>
+                Comentários da artigo
+                <textarea
+                    rows="4"
+                    value={descricao}
+                    onChange={(e) => setComentarios(e.target.value)}
+                    placeholder="Descreva os pontos fortes e oportunidades de melhoria..."
+                    required
+                />
+              </label>
+
+              <button type="submit" className="btn-primary" disabled={enviando}>
+                {enviando ? 'Cadastrando...' : 'Cadastrar artigo'}
+              </button>
+            </form>
+          </section>
+
+          <section className="card">
+            <div className="list-header">
+              <h2>Artigos Registradas ({artigos.length})</h2>
+              <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => buscarAvaliacoes()}
+                  disabled={carregandoLista}
+              >
+                {carregandoLista ? 'Atualizando...' : 'Atualizar'}
+              </button>
             </div>
-          )}
-        </section>
+
+            {artigos.length === 0 ? (
+                <p className="empty-state">Nenhuma avaliação cadastrada até o momento.</p>
+            ) : (
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th></th>
+                      <th>Nota</th>
+                      <th>Comentários</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {artigos.map((av) => (
+                        <tr key={av.id}>
+                          <td>#{av.id}</td>
+                          <td>{av.email}</td>
+                          <td>{av.emailAvaliado}</td>
+                          <td>
+                            <span className="score-pill">{av.prioridade} / 10</span>
+                          </td>
+                          <td>{av.descricao}</td>
+                          <td>
+                            {av.dataAvaliacao
+                                ? new Date(av.dataAvaliacao).toLocaleString('pt-BR')
+                                : '-'}
+                          </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                  </table>
+                </div>
+            )}
+          </section>
+        </div>
       </div>
-    </div>
   )
 }
