@@ -1,15 +1,10 @@
-package br.insper.avaliacoes.avaliacao;
+package br.insper.artigos.artigo;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -17,36 +12,36 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping({"/avaliacoes", "/api/avaliacoes"})
-public class AvaliacaoController {
+@RequestMapping({"/artigos", "/api/artigos"})
+public class ArtigoController {
 
-    private final AvaliacaoService avaliacaoService;
+    private final ArtigoService artigoService;
 
-    public AvaliacaoController(AvaliacaoService avaliacaoService) {
-        this.avaliacaoService = avaliacaoService;
+    public ArtigoController(ArtigoService artigoService) {
+        this.artigoService = artigoService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Avaliacao cadastrarAvaliacao(
+    public Artigo cadastrarArtigo(
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody Avaliacao avaliacao
+            @Valid @RequestBody Artigo artigo
     ) {
         List<String> roles = extractRoles(jwt);
         boolean isAdmin = roles.stream().anyMatch(r -> r.equalsIgnoreCase("ADMIN"));
         if (!isAdmin) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Acesso negado: apenas usuários com perfil ADMIN podem cadastrar avaliações."
+                    "Acesso negado: apenas usuários com perfil ADMIN podem cadastrar artigos."
             );
         }
 
         String emailToken = extractEmail(jwt);
-        return avaliacaoService.cadastrarAvaliacao(avaliacao, emailToken);
+        return artigoService.cadastrarArtigo(artigo, emailToken);
     }
 
     @GetMapping
-    public List<Avaliacao> listarAvaliacoes(@AuthenticationPrincipal Jwt jwt) {
+    public List<Artigo> listarArtigos(@AuthenticationPrincipal Jwt jwt) {
         List<String> roles = extractRoles(jwt);
         // Aceita usuários ADMIN e USER (caso haja roles no token, valida se possui ADMIN ou USER)
         if (!roles.isEmpty()) {
@@ -59,7 +54,26 @@ public class AvaliacaoController {
                 );
             }
         }
-        return avaliacaoService.listarAvaliacoes();
+        return artigoService.listarArtigos();
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void deletarArtigo(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id
+    ) {
+        List<String> roles = extractRoles(jwt);
+        boolean isAdmin = roles.stream().anyMatch(r -> r.equalsIgnoreCase("ADMIN"));
+        if (!isAdmin) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Acesso negado: apenas usuários com perfil ADMIN podem deletar artigos."
+            );
+        }
+
+        String emailToken = extractEmail(jwt);
+        artigoService.deletarArtigo(id);
     }
 
     private List<String> extractRoles(Jwt jwt) {

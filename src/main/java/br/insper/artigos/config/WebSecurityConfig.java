@@ -1,4 +1,4 @@
-package br.insper.avaliacoes.config;
+package br.insper.artigos.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

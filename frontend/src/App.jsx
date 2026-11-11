@@ -32,20 +32,20 @@ export default function App() {
   const [apiUrl] = useState(defaultApiUrl)
   const [token, setToken] = useState('')
   const [roles, setRoles] = useState([])
-  const [avaliacoes, setAvaliacoes] = useState([])
+  const [artigos, setAvaliacoes] = useState([])
   const [carregandoLista, setCarregandoLista] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
 
-  const [emailAvaliador, setEmailAvaliador] = useState('')
+  const [email, setEmail] = useState('')
   const [emailAvaliado, setEmailAvaliado] = useState('')
-  const [nota, setNota] = useState(10)
-  const [comentarios, setComentarios] = useState('')
+  const [prioridade, setNota] = useState(10)
+  const [descricao, setComentarios] = useState('')
 
   useEffect(() => {
     if (user?.email) {
-      setEmailAvaliador(user.email)
+      setEmail(user.email)
     }
   }, [user])
 
@@ -70,7 +70,7 @@ export default function App() {
     setCarregandoLista(true)
     setErro('')
     try {
-      const response = await fetch(`${apiUrl}/avaliacoes`, {
+      const response = await fetch(`${apiUrl}/artigos`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${authToken}`
@@ -99,31 +99,31 @@ export default function App() {
 
     try {
       const authToken = token || (await getAccessTokenSilently())
-      const response = await fetch(`${apiUrl}/avaliacoes`, {
+      const response = await fetch(`${apiUrl}/artigos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          emailAvaliador: emailAvaliador || user?.email,
+          email: email || user?.email,
           emailAvaliado,
-          comentarios,
-          nota: Number(nota)
+          descricao,
+          prioridade: Number(prioridade)
         })
       })
 
       if (response.status === 403) {
         throw new Error(
-          'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem cadastrar avaliações.'
+          'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem cadastrar artigos.'
         )
       }
       if (!response.ok) {
         const text = await response.text()
-        throw new Error(`Falha ao cadastrar avaliação (${response.status}): ${text}`)
+        throw new Error(`Falha ao cadastrar artigo (${response.status}): ${text}`)
       }
 
-      setSucesso('Avaliação cadastrada com sucesso!')
+      setSucesso('artigo cadastrada com sucesso!')
       setEmailAvaliado('')
       setComentarios('')
       setNota(10)
@@ -146,7 +146,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <div className="container center-card">
-        <h1>Sistema de Avaliações</h1>
+        <h1>Sistema de Artigos</h1>
         <p className="subtitle">
           Plataforma corporativa para avaliação de colaboradores autenticada via Auth0.
         </p>
@@ -161,7 +161,7 @@ export default function App() {
     <div className="container">
       <header className="header">
         <div>
-          <h1>Sistema de Avaliações</h1>
+          <h1>Sistema de Artigos</h1>
           <p className="user-info">
             Logado como: <strong>{user?.email || user?.name}</strong>
             {roles.length > 0 ? (
@@ -188,14 +188,14 @@ export default function App() {
 
       <div className="grid">
         <section className="card">
-          <h2>Nova Avaliação (ADMIN)</h2>
+          <h2>Nova artigo (ADMIN)</h2>
           <form onSubmit={cadastrarAvaliacao} className="form">
             <label>
-              E-mail do Avaliador
+              E-mail do
               <input
                 type="email"
-                value={emailAvaliador}
-                onChange={(e) => setEmailAvaliador(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="avaliador@empresa.com"
                 required
               />
@@ -218,17 +218,17 @@ export default function App() {
                 type="number"
                 min="0"
                 max="10"
-                value={nota}
+                value={prioridade}
                 onChange={(e) => setNota(e.target.value)}
                 required
               />
             </label>
 
             <label>
-              Comentários da Avaliação
+              Comentários da artigo
               <textarea
                 rows="4"
-                value={comentarios}
+                value={descricao}
                 onChange={(e) => setComentarios(e.target.value)}
                 placeholder="Descreva os pontos fortes e oportunidades de melhoria..."
                 required
@@ -236,14 +236,14 @@ export default function App() {
             </label>
 
             <button type="submit" className="btn-primary" disabled={enviando}>
-              {enviando ? 'Cadastrando...' : 'Cadastrar Avaliação'}
+              {enviando ? 'Cadastrando...' : 'Cadastrar artigo'}
             </button>
           </form>
         </section>
 
         <section className="card">
           <div className="list-header">
-            <h2>Avaliações Registradas ({avaliacoes.length})</h2>
+            <h2>Artigos Registradas ({artigos.length})</h2>
             <button
               type="button"
               className="btn-secondary"
@@ -254,7 +254,7 @@ export default function App() {
             </button>
           </div>
 
-          {avaliacoes.length === 0 ? (
+          {artigos.length === 0 ? (
             <p className="empty-state">Nenhuma avaliação cadastrada até o momento.</p>
           ) : (
             <div className="table-wrapper">
@@ -262,7 +262,7 @@ export default function App() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Avaliador</th>
+                    <th></th>
                     <th>Avaliado</th>
                     <th>Nota</th>
                     <th>Comentários</th>
@@ -270,15 +270,15 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {avaliacoes.map((av) => (
+                  {artigos.map((av) => (
                     <tr key={av.id}>
                       <td>#{av.id}</td>
-                      <td>{av.emailAvaliador}</td>
+                      <td>{av.email}</td>
                       <td>{av.emailAvaliado}</td>
                       <td>
-                        <span className="score-pill">{av.nota} / 10</span>
+                        <span className="score-pill">{av.prioridade} / 10</span>
                       </td>
-                      <td>{av.comentarios}</td>
+                      <td>{av.descricao}</td>
                       <td>
                         {av.dataAvaliacao
                           ? new Date(av.dataAvaliacao).toLocaleString('pt-BR')
