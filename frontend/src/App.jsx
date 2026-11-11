@@ -91,6 +91,32 @@ export default function App() {
     }
   }
 
+  async function deletarArtigo(id) {
+    try {
+      const authToken = token || (await getAccessTokenSilently())
+      const response = await fetch(`${apiUrl}/artigos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`
+        }
+      })
+
+      if (response.status === 403) {
+        throw new Error(
+            'Acesso negado (403 Forbidden): Apenas usuários com a role ADMIN podem deletar artigos.'
+        )
+      }
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(`Falha ao deletar artigo (${response.status}): ${text}`)
+      }
+  }catch (e) {
+      setErro(e.message || 'Erro ao remover.')
+    }
+
+    }
+
   async function cadastrarAvaliacao(e) {
     e.preventDefault()
     setErro('')
@@ -251,7 +277,11 @@ export default function App() {
                     <thead>
                     <tr>
                       <th>ID</th>
-                      <th></th>
+                      <th>
+
+                        remover
+
+                      </th>
                       <th>Nota</th>
                       <th>Comentários</th>
                     </tr>
@@ -261,7 +291,11 @@ export default function App() {
                         <tr key={av.id}>
                           <td>#{av.id}</td>
                           <td>{av.email}</td>
-                          <td>{av.emailAvaliado}</td>
+                          <td>
+                            <button key={av.id} id={av.id} onClick={() => deletarArtigo(av.id)}>
+                            remover
+                          </button>
+                          </td>
                           <td>
                             <span className="score-pill">{av.prioridade} / 10</span>
                           </td>
